@@ -30,6 +30,11 @@ public class UnnamedScepterItem extends Item {
             boolean xzNeg = false;
             boolean yNeg = false;
 
+            boolean xzLineValid = false;
+
+            double xIncrease = 0;
+            double zIncrease = 0;
+
             //magnitude of the 3d vector
             double magnitude = player.getLookAngle().length();
 
@@ -39,55 +44,79 @@ public class UnnamedScepterItem extends Item {
             //vertical looking angle
             double lookingAngle = Math.acos(xzLine / magnitude);
 
-            //x side used for horizontal looking angle
-            double xzAngle = player.getLookAngle().x;
-
-            //checks if the angles are negative so it can be reversed back after calculations
-            if(xzAngle < 0)
+            if(xzLine != 0.0)
             {
-                xzNeg = true;
+                xzLineValid = true;
 
-                xzAngle *= -1;
+                //x side used for horizontal looking angle
+                double xzAngle = player.getLookAngle().x;
+
+                //checks if the angles are negative, so it can be reversed back after calculations
+                //if(xzAngle < 0)
+                //{
+                //    xzNeg = true;
+                //    xzAngle *= -1;
+                //}
+                if(xzAngle < 0)
+                {
+                    xzNeg = true;
+                    xzAngle *= -1;
+                }
+
+
+                //horizontal looking angle
+                double horizontalAngle = Math.asin(xzAngle / xzLine);
+
+                //new line based on teleport distance
+                xzLine = (Math.cos(lookingAngle) * TELEPORT_DISTANCE);
+
+                xIncrease = (Math.sin(horizontalAngle) * xzLine);
+                zIncrease = (Math.cos(horizontalAngle) * xzLine);
+
+                //changes x and z values back to negatives
+                if(xzNeg)
+                {
+                    xIncrease *= -1;
+                    zIncrease *= -1;
+                }
+
             }
 
             player.sendSystemMessage(Component.literal("looking angle: " + lookingAngle));
             player.sendSystemMessage(Component.literal("x rot axis: " + player.getXRot()));
+            player.sendSystemMessage(Component.literal("y rot axis: " + player.getYRot()));
+
             if(player.getXRot() > 0)
             {
                 yNeg = true;
             }
 
-            //horizontal looking angle
-            double horizontalAngle = Math.asin(xzAngle / xzLine);
 
-            //new line based on teleport distance
-            xzLine = (Math.cos(lookingAngle) * TELEPORT_DISTANCE);
+
 
             //calculates the increases needed to the players' positions for the teleport
             double yIncrease = (Math.sin(lookingAngle) * TELEPORT_DISTANCE);
-            double xIncrease = (Math.sin(horizontalAngle) * xzLine);
-            double zIncrease = (Math.cos(horizontalAngle) * xzLine);
 
-            //changes x and z values back to negatives
-            if(xzNeg)
-            {
-                xIncrease *= -1;
-                zIncrease *= -1;
-            }
+
+
 
             //changes y value back to negative
             if(yNeg)
             {
                 yIncrease *= -1;
             }
-            
-            player.teleportTo((player.position().x + xIncrease), (player.position().y + yIncrease), (player.position().z + zIncrease));
 
+            if(xzLineValid)
+            {
+                player.teleportTo((player.position().x + xIncrease), (player.position().y + yIncrease), (player.position().z + zIncrease));
+            }
+            else
+            {
+                player.teleportTo((player.position().x), (player.position().y + yIncrease), (player.position().z));
+            }
 
             player.getCooldowns().addCooldown(this, COOLDOWN);
         }
-
-
         return super.use(level, player, interactionHand);
     }
 
